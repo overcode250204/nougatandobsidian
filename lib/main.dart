@@ -64,6 +64,10 @@ class _HomePageState extends State<HomePage> {
 
   bool _loading = false;
 
+  double _progress = 0.0;
+
+  String _pageInfo = '';
+
   String _status = '';
 
   bool _showSettings = false;
@@ -144,118 +148,121 @@ class _HomePageState extends State<HomePage> {
 
     setState(() {
       _loading = true;
-      _status = '⏳ Running Nougat...';
+      _progress = 0.0;
+      _pageInfo = '';
+      _status = '⏳ Starting Nougat...';
       _markdown = '';
     });
 
     try {
-      // Ensure output folder exists
       await Directory(_outputDir).create(recursive: true);
 
-      // Clear old markdown outputs
+      // Clear old outputs
       final oldFiles = Directory(_outputDir)
           .listSync(recursive: true)
           .whereType<File>()
           .where((f) => f.path.endsWith('.mmd') || f.path.endsWith('.md'));
-
       for (final f in oldFiles) {
-        try {
-          await f.delete();
-        } catch (_) {}
+        try { await f.delete(); } catch (_) {}
       }
 
-      // Run Nougat
-      final result = await Process.run(_nougatExe, [
-        _selectedPdf!,
-        '-o',
-        _outputDir,
-      ], runInShell: true).timeout(const Duration(minutes: 30));
+      // Start nougat process (streaming)
+      final process = await Process.start(
+        _nougatExe,
+        [_selectedPdf!, '-o', _outputDir],
+        runInShell: true,
+      );
 
-      debugPrint('================ STDOUT ================');
+      final stdoutBuf = StringBuffer();
 
-      debugPrint(result.stdout.toString());
+      // Nougat writes tqdm progress to stderr.
+      // It has 2 tqdm bars: (1) fast page-scan that hits 100% in seconds,
+      // (2) slow model inference — the real progress.
+      // We detect bar reset (progress drops significantly) to ignore the scan.
+      process.stderr.transform(SystemEncoding().decoder).listen((chunk) {
+        debugPrint('[STDERR] $chunk');
+        final match = RegExp(r'(\d+)%.*?\|\s*(\d+)/(\d+)').firstMatch(chunk);
+        if (match != null) {
+          final percent = int.tryParse(match.group(1) ?? '0') ?? 0;
+          final current = match.group(2) ?? '?';
+          final total = match.group(3) ?? '?';
+          final newPct = percent / 100.0;
+          setState(() {
+            // When a new tqdm bar starts, progress drops back to near 0
+            // (e.g., quick page-scan finishes at 100%, then inference starts at 0%)
+            if (_progress > 0.5 && newPct < 0.1) {
+              // New bar detected — reset and track this one
+              _progress = newPct;
+            } else if (newPct >= _progress) {
+              _progress = newPct;
+            }
+            _pageInfo = 'Page $current / $total';
+            _status = '⏳ Converting... $current/$total ($percent%)';
+          });
+        }
+      });
 
-      debugPrint('================ STDERR ================');
+      process.stdout.transform(SystemEncoding().decoder).listen((chunk) {
+        debugPrint('[STDOUT] $chunk');
+        stdoutBuf.write(chunk);
+      });
 
-      debugPrint(result.stderr.toString());
+      final exitCode = await process.exitCode.timeout(
+        const Duration(minutes: 30),
+        onTimeout: () { process.kill(); return -1; },
+      );
 
-      // IMPORTANT:
-      // Nougat sometimes prints warnings/errors
-      // but still generates markdown successfully.
-      // So DO NOT instantly fail on stderr.
+      if (exitCode == -1) {
+        setState(() {
+          _loading = false;
+          _status = '❌ Timeout — PDF may be too large.';
+        });
+        return;
+      }
 
-      // Scan recursively for markdown output
+      // Scan for output mmd
       final files = Directory(_outputDir)
           .listSync(recursive: true)
           .whereType<File>()
           .where((f) => f.path.endsWith('.mmd') || f.path.endsWith('.md'))
           .toList();
 
-      debugPrint('================ FOUND FILES ================');
-
-      for (final f in files) {
-        debugPrint(f.path);
-      }
-
       if (files.isEmpty) {
         setState(() {
           _loading = false;
-
-          _status =
-              '❌ No markdown output found.\n\n'
-              'Exit code: ${result.exitCode}\n\n'
-              'STDERR:\n${result.stderr}';
+          _progress = 0;
+          _status = '❌ No .mmd output found.\n\nExit: $exitCode\n${stdoutBuf}';
         });
-
         return;
       }
 
-      // Get newest file
-      files.sort(
-        (a, b) => b.statSync().modified.compareTo(a.statSync().modified),
-      );
-
-      final outputFile = files.first;
-
-      debugPrint('USING OUTPUT: ${outputFile.path}');
-
-      final content = await outputFile.readAsString();
+      files.sort((a, b) => b.statSync().modified.compareTo(a.statSync().modified));
+      final content = await files.first.readAsString();
 
       if (content.trim().isEmpty) {
         setState(() {
           _loading = false;
-
-          _status =
-              '❌ Markdown file is empty.\n'
-              '${outputFile.path}';
+          _status = '❌ Output file is empty.';
         });
-
         return;
       }
 
       setState(() {
         _markdown = content;
-
         _loading = false;
-
-        _status =
-            '✅ Conversion complete!\n\n'
-            'Output:\n${outputFile.path}';
+        _progress = 1.0;
+        _pageInfo = '';
+        _status = '✅ Conversion complete! (${files.first.path.split(r"\\" ).last})';
       });
     } on TimeoutException {
       setState(() {
         _loading = false;
-
-        _status =
-            '❌ Timeout.\n'
-            'PDF may be too large.';
+        _status = '❌ Timeout.';
       });
     } catch (e, stack) {
       debugPrint(stack.toString());
-
       setState(() {
         _loading = false;
-
         _status = '❌ Exception:\n$e';
       });
     }
@@ -368,6 +375,24 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ],
               ),
+              // Progress bar (shown while loading)
+              if (_loading) ...[
+                const SizedBox(height: 10),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: LinearProgressIndicator(
+                    value: _progress > 0 ? _progress : null,
+                    minHeight: 6,
+                    backgroundColor: Colors.white10,
+                    valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF7C3AED)),
+                  ),
+                ),
+                if (_pageInfo.isNotEmpty) ...[  
+                  const SizedBox(height: 4),
+                  Text(_pageInfo,
+                      style: const TextStyle(color: Colors.white54, fontSize: 11)),
+                ],
+              ],
               if (_status.isNotEmpty) ...[
                 const SizedBox(height: 12),
                 Container(

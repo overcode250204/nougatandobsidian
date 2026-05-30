@@ -66,55 +66,76 @@ class _ConfigPathScreenState extends State<ConfigPathScreen> {
 }
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.all(20),
-      children: [
-        _BrowseField(
-          label: 'Nougat EXE Path',
-          icon: Icons.terminal,
-          value: _nougatExeCtrl.text,
-          onBrowse: () async {
-            final result = await FilePicker.platform.pickFiles(
-              type: FileType.custom,
-              allowedExtensions: ['exe'],
-              dialogTitle: 'Select nougat.exe',
-            );
-            if (result?.files.single.path != null) {
-              setState(() => _nougatExeCtrl.text = result!.files.single.path!);
-            }
-          },
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Card(
+        margin: EdgeInsets.zero,
+        child: ListView(
+          padding: const EdgeInsets.all(24),
+          children: [
+            const Text(
+              'Configuration',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Set up the paths required for the conversion process.',
+              style: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.6)),
+            ),
+            const SizedBox(height: 24),
+            _BrowseField(
+              label: 'Nougat EXE Path',
+              icon: Icons.terminal,
+              value: _nougatExeCtrl.text,
+              onBrowse: () async {
+                final result = await FilePicker.platform.pickFiles(
+                  type: FileType.custom,
+                  allowedExtensions: ['exe'],
+                  dialogTitle: 'Select nougat.exe',
+                );
+                if (result?.files.single.path != null) {
+                  setState(() => _nougatExeCtrl.text = result!.files.single.path!);
+                }
+              },
+            ),
+            const SizedBox(height: 20),
+            _BrowseField(
+              label: 'Output Directory',
+              icon: Icons.output,
+              value: _outputDirCtrl.text,
+              onBrowse: () async {
+                final path = await FilePicker.platform.getDirectoryPath(
+                  dialogTitle: 'Select output folder for .mmd files',
+                );
+                if (path != null) setState(() => _outputDirCtrl.text = path);
+              },
+            ),
+            const SizedBox(height: 20),
+            _BrowseField(
+              label: 'Obsidian Vault Folder',
+              icon: Icons.book_outlined,
+              value: _vaultPathCtrl.text,
+              onBrowse: () async {
+                final path = await FilePicker.platform.getDirectoryPath(
+                  dialogTitle: 'Select your Obsidian vault folder',
+                );
+                if (path != null) setState(() => _vaultPathCtrl.text = path);
+              },
+            ),
+            const SizedBox(height: 32),
+            ElevatedButton.icon(
+              onPressed: () async => _savePathConfig(_nougatExe, _outputDir, _vaultPath),
+              icon: const Icon(Icons.save, size: 18),
+              label: const Text('Save Settings'),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                backgroundColor: theme.colorScheme.primary,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 16),
-        _BrowseField(
-          label: 'Output Directory',
-          icon: Icons.output,
-          value: _outputDirCtrl.text,
-          onBrowse: () async {
-            final path = await FilePicker.platform.getDirectoryPath(
-              dialogTitle: 'Select output folder for .mmd files',
-            );
-            if (path != null) setState(() => _outputDirCtrl.text = path);
-          },
-        ),
-        const SizedBox(height: 16),
-        _BrowseField(
-          label: 'Obsidian Vault Folder',
-          icon: Icons.book_outlined,
-          value: _vaultPathCtrl.text,
-          onBrowse: () async {
-            final path = await FilePicker.platform.getDirectoryPath(
-              dialogTitle: 'Select your Obsidian vault folder',
-            );
-            if (path != null) setState(() => _vaultPathCtrl.text = path);
-          },
-        ),
-        const SizedBox(height: 24),
-        ElevatedButton.icon(
-          onPressed:   () async => _savePathConfig(_nougatExe, _outputDir, _vaultPath),
-          icon: const Icon(Icons.save, size: 16),
-          label: const Text('Save Settings'),
-        ),
-      ],
+      ),
     );
   }
 }
@@ -133,64 +154,59 @@ class _BrowseField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Icon(icon, size: 16, color: Colors.white54),
-            const SizedBox(width: 6),
+            Icon(icon, size: 18, color: theme.colorScheme.primary),
+            const SizedBox(width: 8),
             Text(
               label,
               style: const TextStyle(
-                color: Colors.white70,
-                fontSize: 13,
+                color: Colors.white,
+                fontSize: 14,
                 fontWeight: FontWeight.w600,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
         Row(
           children: [
             Expanded(
               child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 12,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF2A2640),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.white.withAlpha(20)),
+                  color: theme.colorScheme.surface,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white10),
                 ),
                 child: Text(
                   value.isEmpty ? 'Not set' : value,
                   style: TextStyle(
                     color: value.isEmpty ? Colors.white30 : Colors.white70,
-                    fontSize: 12,
+                    fontSize: 13,
                     fontFamily: 'monospace',
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 12),
             ElevatedButton.icon(
               onPressed: onBrowse,
-              icon: const Icon(Icons.folder_open, size: 16),
+              icon: const Icon(Icons.folder_open, size: 18),
               label: const Text('Browse'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF2A2640),
-                foregroundColor: Colors.white70,
+                backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                foregroundColor: Colors.white,
                 elevation: 0,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  side: BorderSide(color: Colors.white.withAlpha(30)),
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(color: Colors.white.withAlpha(20)),
                 ),
               ),
             ),

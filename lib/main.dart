@@ -49,19 +49,61 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Paper2Vault'),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            Icon(Icons.description, color: Colors.white70),
+            SizedBox(width: 12),
+            Text('Paper2Vault'),
+          ],
+        ),
         actions: [
-          IconButton(
-            onPressed: () {
-              setState(() {
-                _showSettings = !_showSettings;
-              });
-            },
-            icon: Icon(_showSettings ? Icons.close : Icons.settings),
+          Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: IconButton(
+              onPressed: () {
+                setState(() {
+                  _showSettings = !_showSettings;
+                });
+              },
+              icon: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                transitionBuilder: (child, anim) => RotationTransition(
+                  turns: child.key == const ValueKey('icon1')
+                      ? Tween<double>(begin: 1, end: 0.75).animate(anim)
+                      : Tween<double>(begin: 0.75, end: 1).animate(anim),
+                  child: FadeTransition(opacity: anim, child: child),
+                ),
+                child: Icon(
+                  _showSettings ? Icons.close : Icons.settings_outlined,
+                  key: ValueKey(_showSettings ? 'icon1' : 'icon2'),
+                  color: Colors.white,
+                ),
+              ),
+            ),
           ),
         ],
       ),
-      body: _showSettings ? ConfigPathScreen() : PdfConverterScreen(),
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 400),
+        switchInCurve: Curves.easeOutCubic,
+        switchOutCurve: Curves.easeInCubic,
+        transitionBuilder: (child, animation) {
+          return FadeTransition(
+            opacity: animation,
+            child: SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0, 0.05),
+                end: Offset.zero,
+              ).animate(animation),
+              child: child,
+            ),
+          );
+        },
+        child: _showSettings
+            ? const ConfigPathScreen(key: ValueKey('config'))
+            : const PdfConverterScreen(key: ValueKey('converter')),
+      ),
     );
   }
 

@@ -151,130 +151,192 @@ class _PdfConverterScreenState extends State<PdfConverterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            children: [
-              Row(
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Card(
+            margin: EdgeInsets.zero,
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF2A2640),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        _selectedPdf?.split('\\').last ?? 'No PDF selected',
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  ElevatedButton(
-                    onPressed: _loading ? null : _onPickPdf,
-                    child: const Text('Browse'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: (_selectedPdf == null || _loading)
-                          ? null
-                          : _onConvertPdf,
-                      child: Text(_loading ? 'Converting...' : 'Convert'),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: _markdown.isEmpty ? null : _onSaveToObsidian,
-                      child: const Text('Save to Vault'),
-                    ),
-                  ),
-                ],
-              ),
-              // Progress bar (shown while loading)
-              if (_loading) ...[
-                const SizedBox(height: 10),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
-                  child: LinearProgressIndicator(
-                    value: _progress > 0 ? _progress : null,
-                    minHeight: 6,
-                    backgroundColor: Colors.white10,
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                      Color(0xFF7C3AED),
-                    ),
-                  ),
-                ),
-                if (_pageInfo.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    _pageInfo,
-                    style: const TextStyle(color: Colors.white54, fontSize: 11),
-                  ),
-                ],
-              ],
-              if (_status.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white10,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: SelectableText(
-                    _status,
-                    style: const TextStyle(fontSize: 12),
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-        const Divider(height: 1),
-        Expanded(
-          child: _markdown.isEmpty
-              ? const Center(child: Text('Select a PDF to begin'))
-              : Stack(
-                  children: [
-                    // Error UI
-                    SingleChildScrollView(
-                      padding: const EdgeInsets.all(20),
-                      child: SizedBox(
-                        width: double.infinity,
-                        child: SelectableText(
-                          _markdown,
-                          style: const TextStyle(
-                            fontFamily: 'monospace',
-                            height: 1.6,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.surface,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.white10),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.picture_as_pdf, color: Colors.white54, size: 20),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  _selectedPdf?.split('\\').last ?? 'No PDF selected...',
+                                  style: TextStyle(
+                                    color: _selectedPdf == null ? Colors.white54 : Colors.white,
+                                    fontSize: 14,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
+                      const SizedBox(width: 12),
+                      ElevatedButton.icon(
+                        onPressed: _loading ? null : _onPickPdf,
+                        icon: const Icon(Icons.folder_open, size: 18),
+                        label: const Text('Browse'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: (_selectedPdf == null || _loading) ? null : _onConvertPdf,
+                          icon: _loading
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                )
+                              : const Icon(Icons.auto_awesome, size: 18),
+                          label: Text(_loading ? 'Converting...' : 'Convert to Markdown'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: theme.colorScheme.primary,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: _markdown.isEmpty ? null : _onSaveToObsidian,
+                          icon: const Icon(Icons.save_alt, size: 18),
+                          label: const Text('Save to Vault'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: theme.colorScheme.secondary,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (_loading) ...[
+                    const SizedBox(height: 20),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: LinearProgressIndicator(
+                        value: _progress > 0 ? _progress : null,
+                        minHeight: 8,
+                        backgroundColor: Colors.white10,
+                        valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
+                      ),
                     ),
-                    Positioned(
-                      top: 10,
-                      right: 10,
-                      child: IconButton.filled(
-                        onPressed: () {
-                          Clipboard.setData(ClipboardData(text: _markdown));
-
-                          snack(context, 'Copied');
-                        },
-                        icon: const Icon(Icons.copy),
+                    if (_pageInfo.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Center(
+                        child: Text(
+                          _pageInfo,
+                          style: const TextStyle(color: Colors.white54, fontSize: 12, fontWeight: FontWeight.w500),
+                        ),
+                      ),
+                    ],
+                  ],
+                  if (_status.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surface,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.white10),
+                      ),
+                      child: SelectableText(
+                        _status,
+                        style: const TextStyle(fontSize: 13, color: Colors.white70),
                       ),
                     ),
                   ],
-                ),
-        ),
-      ],
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Expanded(
+            child: Card(
+              margin: EdgeInsets.zero,
+              color: theme.colorScheme.surface,
+              child: _markdown.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.notes_rounded, size: 64, color: Colors.white.withOpacity(0.1)),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Your markdown will appear here',
+                            style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 16),
+                          ),
+                        ],
+                      ),
+                    )
+                  : Stack(
+                      children: [
+                        SingleChildScrollView(
+                          padding: const EdgeInsets.all(20),
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: SelectableText(
+                              _markdown,
+                              style: const TextStyle(
+                                fontFamily: 'monospace',
+                                height: 1.6,
+                                fontSize: 13,
+                                color: Colors.white70,
+                              ),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          top: 12,
+                          right: 12,
+                          child: IconButton.filled(
+                            onPressed: () {
+                              Clipboard.setData(ClipboardData(text: _markdown));
+                              snack(context, 'Copied to clipboard');
+                            },
+                            icon: const Icon(Icons.copy, size: 18),
+                            style: IconButton.styleFrom(
+                              backgroundColor: theme.colorScheme.primary.withOpacity(0.2),
+                              foregroundColor: theme.colorScheme.primary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

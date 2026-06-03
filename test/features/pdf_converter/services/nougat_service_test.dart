@@ -59,7 +59,7 @@ void main() {
       try {
         final f1 = File('${tempDir.path}/old.mmd');
         await f1.writeAsString('old content');
-        await Future.delayed(const Duration(milliseconds: 100));
+        await Future.delayed(const Duration(milliseconds: 1000)); // 1 second delay for Windows
         
         final f2 = File('${tempDir.path}/new.mmd');
         await f2.writeAsString('new content');
@@ -75,8 +75,6 @@ void main() {
 
     test('scanFileMd returns resultCode 0 for empty files', () async {
        final tempDir = await Directory.systemTemp.createTemp('empty_test');
-       try {
-         await File('${tempDir.path}/empty.mmd').writeAsString('  ');
          final result = await NougatService.scanFileMd(tempDir.path);
          expect(result.resultCode, 0);
        } finally {

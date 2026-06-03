@@ -1,199 +1,180 @@
 import 'package:flutter/material.dart';
-import 'package:paper_to_obsidian/core/services/pref_service.dart';
+import 'package:paper_to_obsidian/features/settings/controllers/config_path_controller.dart';
 import 'package:paper_to_obsidian/widgets/snack.dart';
-import 'package:paper_to_obsidian/core/services/file_service_interface.dart';
 
 class ConfigPathScreen extends StatefulWidget {
-  final IFileService? fileService;
+  final ConfigPathController controller;
   
-  const ConfigPathScreen({super.key, this.fileService});
+  const ConfigPathScreen({super.key, required this.controller});
 
   @override
   State<ConfigPathScreen> createState() => _ConfigPathScreenState();
 }
 
 class _ConfigPathScreenState extends State<ConfigPathScreen> {
-  final _nougatExeCtrl = TextEditingController();
-  final _outputDirCtrl = TextEditingController();
-  final _vaultPathCtrl = TextEditingController();
+  late TextEditingController _nougatExeCtrl;
+  late TextEditingController _outputDirCtrl;
+  late TextEditingController _vaultPathCtrl;
 
   @override
   void initState() {
     super.initState();
-    _loadSavedPaths();
-  }
-
-  Future<void> _loadSavedPaths() async {
-    final config = await loadPathConfig();
-    setState(() {
-      _nougatExeCtrl.text = config.nougatExe!;
-      _outputDirCtrl.text = config.outputDir!;
-      _vaultPathCtrl.text = config.vaultPath!;
+    _nougatExeCtrl = TextEditingController(text: widget.controller.nougatExe);
+    _outputDirCtrl = TextEditingController(text: widget.controller.outputDir);
+    _vaultPathCtrl = TextEditingController(text: widget.controller.vaultPath);
+    
+    widget.controller.addListener(_onControllerUpdate);
+    widget.controller.load().then((_) {
+      _nougatExeCtrl.text = widget.controller.nougatExe;
+      _outputDirCtrl.text = widget.controller.outputDir;
+      _vaultPathCtrl.text = widget.controller.vaultPath;
     });
-  }
-
-  Future<void> _onPickNougatExe() async {
-    final fileService = widget.fileService ?? FileServiceWrapper();
-    final result = await fileService.getPdf(); 
-    if (result != null) {
-      setState(() {
-        _nougatExeCtrl.text = result.files.single.path!;
-      });
-    }
-  }
-
-  Future<void> _onPickOutputDir() async {
-    final fileService = widget.fileService ?? FileServiceWrapper();
-    final path = await fileService.getDirectory();
-    if (path != null) {
-      setState(() {
-        _outputDirCtrl.text = path;
-      });
-    }
-  }
-
-  Future<void> _onPickVaultPath() async {
-    final fileService = widget.fileService ?? FileServiceWrapper();
-    final path = await fileService.getDirectory();
-    if (path != null) {
-      setState(() {
-        _vaultPathCtrl.text = path;
-      });
-    }
-  }
-
-  Future<void> _onSave() async {
-    await savePathConfig(
-      _nougatExeCtrl.text,
-      _outputDirCtrl.text,
-      _vaultPathCtrl.text,
-    );
-    if (mounted) {
-      snack(context, 'Settings saved successfully!');
-    }
   }
 
   @override
   void dispose() {
+    widget.controller.removeListener(_onControllerUpdate);
     _nougatExeCtrl.dispose();
     _outputDirCtrl.dispose();
     _vaultPathCtrl.dispose();
     super.dispose();
   }
 
+  void _onControllerUpdate() {
+    if (mounted) {
+      _nougatExeCtrl.text = widget.controller.nougatExe;
+      _outputDirCtrl.text = widget.controller.outputDir;
+      _vaultPathCtrl.text = widget.controller.vaultPath;
+      setState(() {});
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final c = widget.controller;
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
             children: [
+              IconButton(
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(Icons.arrow_back),
+                style: IconButton.styleFrom(
+                  backgroundColor: theme.colorScheme.surface,
+                ),
+              ),
+              const SizedBox(width: 12),
               Text(
                 'Configuration',
                 style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 32),
-              _BrowseField(
-                label: 'Nougat EXE Path',
-                icon: Icons.terminal,
-                value: _nougatExeCtrl.text,
-                onBrowse: _onPickNougatExe,
-              ),
-              const SizedBox(height: 20),
-              _BrowseField(
-                label: 'Output Directory',
-                icon: Icons.output,
-                value: _outputDirCtrl.text,
-                onBrowse: _onPickOutputDir,
-              ),
-              const SizedBox(height: 20),
-              _BrowseField(
-                label: 'Obsidian Vault Folder',
-                icon: Icons.book_outlined,
-                value: _vaultPathCtrl.text,
-                onBrowse: _onPickVaultPath,
-              ),
-              const SizedBox(height: 32),
-              ElevatedButton.icon(
-                onPressed: _onSave,
-                icon: const Icon(Icons.save, size: 18),
-                label: const Text('Save Settings'),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: theme.colorScheme.primary,
-                ),
-              ),
             ],
           ),
-        ),
+          const SizedBox(height: 24),
+          _buildPathField(
+            title: 'Nougat EXE Path',
+            subtitle: 'Points to nougat.exe (CLI)',
+            controller: _nougatExeCtrl,
+            onBrowse: c.pickNougatExe,
+            icon: Icons.terminal,
+            theme: theme,
+          ),
+          const SizedBox(height: 16),
+          _buildPathField(
+            title: 'Output Directory',
+            subtitle: 'Where temporary .mmd files are saved',
+            controller: _outputDirCtrl,
+            onBrowse: c.pickOutputDir,
+            icon: Icons.folder_zip,
+            theme: theme,
+          ),
+          const SizedBox(height: 16),
+          _buildPathField(
+            title: 'Obsidian Vault Folder',
+            subtitle: 'Target folder in your Obsidian vault',
+            controller: _vaultPathCtrl,
+            onBrowse: c.pickVaultPath,
+            icon: Icons.auto_stories,
+            theme: theme,
+          ),
+          const SizedBox(height: 32),
+          ElevatedButton.icon(
+            onPressed: () async {
+              await c.save();
+              if (mounted) snack(context, 'Settings Saved ✅');
+            },
+            icon: const Icon(Icons.save),
+            label: const Text('Save Settings'),
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 18),
+              backgroundColor: theme.colorScheme.primary,
+              foregroundColor: theme.colorScheme.onPrimary,
+            ),
+          ),
+        ],
       ),
     );
   }
-}
 
-class _BrowseField extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final String value;
-  final VoidCallback onBrowse;
-
-  const _BrowseField({
-    required this.label,
-    required this.icon,
-    required this.value,
-    required this.onBrowse,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
+  Widget _buildPathField({
+    required String title,
+    required String subtitle,
+    required TextEditingController controller,
+    required VoidCallback onBrowse,
+    required IconData icon,
+    required ThemeData theme,
+  }) {
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Icon(icon, size: 18, color: theme.colorScheme.primary),
-            const SizedBox(width: 8),
-            Text(label, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
-          ],
-        ),
-        const SizedBox(height: 10),
-        Row(
-          children: [
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surface,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.white10),
-                ),
-                child: Text(
-                  value.isEmpty ? 'Not set' : value,
-                  style: TextStyle(color: value.isEmpty ? Colors.white38 : Colors.white, fontSize: 13),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
+            Row(
+              children: [
+                Icon(icon, size: 20, color: theme.colorScheme.primary),
+                const SizedBox(width: 12),
+                Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              ],
             ),
-            const SizedBox(width: 12),
-            ElevatedButton.icon(
-              onPressed: onBrowse,
-              icon: const Icon(Icons.folder_open, size: 18),
-              label: const Text('Browse'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
+            const SizedBox(height: 4),
+            Text(subtitle, style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 12)),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: controller,
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: theme.colorScheme.surface,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                      hintText: 'Select path...',
+                    ),
+                    onChanged: (val) {
+                      // Internal update of controller if user types
+                    },
+                    style: const TextStyle(fontSize: 13, fontFamily: 'monospace'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                TextButton.icon(
+                  onPressed: onBrowse,
+                  icon: const Icon(Icons.search, size: 18),
+                  label: const Text('Browse'),
+                ),
+              ],
             ),
           ],
         ),
-      ],
+      ),
     );
   }
 }

@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:paper_to_obsidian/core/theme/global_theme.dart';
 import 'package:paper_to_obsidian/features/pdf_converter/screens/pdf_converter.dart';
 import 'package:paper_to_obsidian/features/settings/screens/config_path.dart';
-
+import 'package:paper_to_obsidian/features/pdf_converter/controllers/pdf_converter_controller.dart';
+import 'package:paper_to_obsidian/features/settings/controllers/config_path_controller.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,11 +18,10 @@ class Paper2VaultApp extends StatelessWidget {
     return MaterialApp(
       title: 'Paper2Vault',
       debugShowCheckedModeBanner: false,
-      theme:getThemeDefault(),
+      theme: getThemeDefault(),
       home: const HomePage(),
     );
   }
-
 }
 
 class HomePage extends StatefulWidget {
@@ -32,18 +32,23 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-
   bool _showSettings = false;
-
+  late PdfConverterController _pdfController;
+  late ConfigPathController _configController;
 
   @override
   void initState() {
     super.initState();
-
- 
+    _pdfController = PdfConverterController();
+    _configController = ConfigPathController();
   }
 
- 
+  @override
+  void dispose() {
+    _pdfController.dispose();
+    _configController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -101,11 +106,9 @@ class _HomePageState extends State<HomePage> {
           );
         },
         child: _showSettings
-            ? const ConfigPathScreen(key: ValueKey('config'))
-            : const PdfConverterScreen(key: ValueKey('converter')),
+            ? ConfigPathScreen(key: const ValueKey('config'), controller: _configController)
+            : PdfConverterScreen(key: const ValueKey('converter'), controller: _pdfController),
       ),
     );
   }
-
-  
 }

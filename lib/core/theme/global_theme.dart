@@ -43,7 +43,7 @@ ThemeData getThemeDefault() {
         backgroundColor: primary,
         foregroundColor: onPrimary,
         elevation: 4,
-        shadowColor: primary.withOpacity(0.5),
+        shadowColor: primary.withValues(alpha: 0.5),
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
@@ -64,7 +64,7 @@ ThemeData getThemeDefault() {
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
@@ -73,7 +73,7 @@ ThemeData getThemeDefault() {
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
     ),
     dividerTheme: DividerThemeData(
-      color: Colors.white.withOpacity(0.1),
+      color: Colors.white.withValues(alpha: 0.1),
       thickness: 1,
     ),
   );

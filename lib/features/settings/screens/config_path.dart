@@ -81,7 +81,7 @@ class _ConfigPathScreenState extends State<ConfigPathScreen> {
             const SizedBox(height: 8),
             Text(
               'Set up the paths required for the conversion process.',
-              style: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.6)),
+              style: TextStyle(fontSize: 14, color: Colors.white.withValues(alpha: 0.6)),
             ),
             const SizedBox(height: 24),
             _BrowseField(
@@ -206,7 +206,7 @@ class _BrowseField extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
-                  side: BorderSide(color: Colors.white.withAlpha(20)),
+                  side: BorderSide(color: Colors.white.withValues(alpha: 20 / 255)),
                 ),
               ),
             ),

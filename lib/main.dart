@@ -49,9 +49,9 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Row(
+        title: const Row(
           mainAxisSize: MainAxisSize.min,
-          children: const [
+          children: [
             Icon(Icons.description, color: Colors.white70),
             SizedBox(width: 12),
             Text('Paper2Vault'),

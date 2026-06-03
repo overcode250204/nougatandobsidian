@@ -290,11 +290,11 @@ class _PdfConverterScreenState extends State<PdfConverterScreen> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.notes_rounded, size: 64, color: Colors.white.withOpacity(0.1)),
+                          Icon(Icons.notes_rounded, size: 64, color: Colors.white.withValues(alpha: 0.1)),
                           const SizedBox(height: 16),
                           Text(
                             'Your markdown will appear here',
-                            style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 16),
+                            style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 16),
                           ),
                         ],
                       ),
@@ -326,7 +326,7 @@ class _PdfConverterScreenState extends State<PdfConverterScreen> {
                             },
                             icon: const Icon(Icons.copy, size: 18),
                             style: IconButton.styleFrom(
-                              backgroundColor: theme.colorScheme.primary.withOpacity(0.2),
+                              backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.2),
                               foregroundColor: theme.colorScheme.primary,
                             ),
                           ),

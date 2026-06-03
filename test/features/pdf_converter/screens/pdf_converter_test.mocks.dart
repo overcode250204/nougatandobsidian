@@ -6,7 +6,10 @@
 import 'dart:async' as _i3;
 import 'dart:io' as _i2;
 
+import 'package:file_picker/file_picker.dart' as _i5;
 import 'package:mockito/mockito.dart' as _i1;
+import 'package:paper_to_obsidian/core/services/file_service_interface.dart'
+    as _i4;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -79,4 +82,21 @@ class MockProcess extends _i1.Mock implements _i2.Process {
             returnValue: false,
           )
           as bool);
+}
+
+/// A class which mocks [IFileService].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockIFileService extends _i1.Mock implements _i4.IFileService {
+  MockIFileService() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  _i3.Future<_i5.FilePickerResult?> getPdf() =>
+      (super.noSuchMethod(
+            Invocation.method(#getPdf, []),
+            returnValue: _i3.Future<_i5.FilePickerResult?>.value(),
+          )
+          as _i3.Future<_i5.FilePickerResult?>);
 }

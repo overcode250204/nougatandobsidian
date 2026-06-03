@@ -8,10 +8,13 @@ import 'package:paper_to_obsidian/features/pdf_converter/services/nougat_service
 import 'package:paper_to_obsidian/features/pdf_converter/services/obsidian_service.dart';
 import 'package:paper_to_obsidian/widgets/snack.dart';
 
+import 'package:paper_to_obsidian/core/services/file_service_interface.dart';
+
 class PdfConverterScreen extends StatefulWidget {
   final Future<Process> Function(String, List<String>, {bool runInShell})? processStarter;
+  final IFileService? fileService;
   
-  const PdfConverterScreen({super.key, this.processStarter});
+  const PdfConverterScreen({super.key, this.processStarter, this.fileService});
 
   @override
   State<PdfConverterScreen> createState() => _PdfConverterScreenState();
@@ -31,7 +34,8 @@ class _PdfConverterScreenState extends State<PdfConverterScreen> {
   String _status = '';
 
   Future<void> _onPickPdf() async {
-    final result = await FileService.getPdf();
+    final fileService = widget.fileService ?? FileServiceWrapper();
+    final result = await fileService.getPdf();
     if (result != null) {
       setState(() {
         _selectedPdf = result.files.single.path!;

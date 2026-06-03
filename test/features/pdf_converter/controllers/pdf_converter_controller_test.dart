@@ -86,10 +86,10 @@ void main() {
       
       await future;
 
-      expect(controller.loading, isFalse);
-      expect(controller.progress, 1.0);
-      expect(controller.markdown, 'Converted Text Contents');
-      expect(controller.status, contains('✅'));
+      expect(controller.loading, isFalse, reason: 'Status: ${controller.status}');
+      expect(controller.progress, 1.0, reason: 'Status: ${controller.status}');
+      expect(controller.markdown, 'Converted Text Contents', reason: 'Status: ${controller.status}');
+      expect(controller.status, contains('✅'), reason: 'Status: ${controller.status}');
     });
   });
 }

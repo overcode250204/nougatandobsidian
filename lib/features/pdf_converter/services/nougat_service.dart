@@ -93,19 +93,30 @@ class NougatService {
 
   static Future<({int resultCode, String? contentData, String? fileName})>
   scanFileMd(String outputDir) async {
-    final files = Directory(outputDir)
-        .listSync(recursive: true)
-        .whereType<File>()
-        .where((f) => f.path.endsWith('.mmd') || f.path.endsWith('.md'))
-        .toList();
+    List<File> files = [];
+    
+    // Retry polling (up to 5 times over 1 second) for slow CI file systems
+    for (int i = 0; i < 5; i++) {
+        files = Directory(outputDir)
+            .listSync(recursive: true)
+            .whereType<File>()
+            .where((f) => f.path.endsWith('.mmd') || f.path.endsWith('.md'))
+            .toList();
+        if (files.isNotEmpty) break;
+        await Future.delayed(const Duration(milliseconds: 200));
+    }
+
     if (files.isEmpty) {
+      debugPrint('DEBUG: scanFileMd found NO files in $outputDir');
       return (resultCode: -1, contentData: null, fileName: null);
     }
 
     files.sort(
-      (a, b) => b.statSync().modified.compareTo(a.statSync().modified),
+      (a, b) => b.lastModifiedSync().compareTo(a.lastModifiedSync()),
     );
-    final content = await files.first.readAsString();
+    
+    final latestFile = files.first;
+    final content = await latestFile.readAsString();
 
     if (content.trim().isEmpty) {
       return (resultCode: 0, contentData: null, fileName: null);
@@ -113,7 +124,7 @@ class NougatService {
     return (
       resultCode: 1,
       contentData: content,
-      fileName: files.first.path.split(RegExp(r'[/\\]')).last,
+      fileName: latestFile.path.split(RegExp(r'[/\\]')).last,
     );
   }
 }

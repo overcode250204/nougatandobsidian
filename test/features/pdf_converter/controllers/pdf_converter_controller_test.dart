@@ -73,10 +73,14 @@ void main() {
       stderrController.add(' 100%|██████████| 1/1'.codeUnits);
       stdoutController.add('dummy stdout'.codeUnits);
       
-      // CREATE THE FILE HERE (during the process)
+      // Give streams a moment to be processed
+      await Future.delayed(const Duration(milliseconds: 100));
+
       final outputFile = File('${tempDir.path}/test.mmd');
       await outputFile.writeAsString('Converted Text Contents');
 
+      await Future.delayed(const Duration(milliseconds: 100));
+      
       exitCodeCompleter.complete(0);
       await stdoutController.close();
       await stderrController.close();

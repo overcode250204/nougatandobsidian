@@ -75,6 +75,8 @@ void main() {
 
     test('scanFileMd returns resultCode 0 for empty files', () async {
        final tempDir = await Directory.systemTemp.createTemp('empty_test');
+       try {
+         await File('${tempDir.path}/empty.mmd').writeAsString('  ');
          final result = await NougatService.scanFileMd(tempDir.path);
          expect(result.resultCode, 0);
        } finally {

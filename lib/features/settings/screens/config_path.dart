@@ -44,7 +44,8 @@ class _ConfigPathScreenState extends State<ConfigPathScreen> {
   }
 
   Future<void> _onPickOutputDir() async {
-    final path = await FilePicker.platform.getDirectoryPath();
+    final fileService = widget.fileService ?? FileServiceWrapper();
+    final path = await fileService.getDirectory();
     if (path != null) {
       setState(() {
         _outputDirCtrl.text = path;
@@ -53,7 +54,8 @@ class _ConfigPathScreenState extends State<ConfigPathScreen> {
   }
 
   Future<void> _onPickVaultPath() async {
-    final path = await FilePicker.platform.getDirectoryPath();
+    final fileService = widget.fileService ?? FileServiceWrapper();
+    final path = await fileService.getDirectory();
     if (path != null) {
       setState(() {
         _vaultPathCtrl.text = path;

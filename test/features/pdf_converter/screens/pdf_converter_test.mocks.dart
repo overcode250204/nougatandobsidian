@@ -99,4 +99,12 @@ class MockIFileService extends _i1.Mock implements _i4.IFileService {
             returnValue: _i3.Future<_i5.FilePickerResult?>.value(),
           )
           as _i3.Future<_i5.FilePickerResult?>);
+
+  @override
+  _i3.Future<String?> getDirectory() =>
+      (super.noSuchMethod(
+            Invocation.method(#getDirectory, []),
+            returnValue: _i3.Future<String?>.value(),
+          )
+          as _i3.Future<String?>);
 }

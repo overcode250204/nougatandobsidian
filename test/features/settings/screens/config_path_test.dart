@@ -22,27 +22,35 @@ void main() {
 
     testWidgets('renders all browse fields', (WidgetTester tester) async {
        await tester.pumpWidget(MaterialApp(home: Scaffold(body: ConfigPathScreen(fileService: mockFileService))));
-       await tester.pump(); // Use pump instead of pumpAndSettle if there are any splash animations
+       await tester.pump();
        
        expect(find.text('Configuration'), findsOneWidget);
+       expect(find.text('Nougat EXE Path'), findsOneWidget);
+       expect(find.text('Output Directory'), findsOneWidget);
+       expect(find.text('Obsidian Vault Folder'), findsOneWidget);
     });
 
     testWidgets('picks a path and saves', (WidgetTester tester) async {
-       final result = FilePickerResult(<PlatformFile>[PlatformFile(name: 'nougat.exe', path: 'C:\\bin\\nougat.exe', size: 100)]);
-       when(mockFileService.getPdf()).thenAnswer((_) async => result);
+       final fileResult = FilePickerResult(<PlatformFile>[PlatformFile(name: 'nougat.exe', path: 'C:\\bin\\nougat.exe', size: 100)]);
+       
+       when(mockFileService.getPdf()).thenAnswer((_) async => fileResult);
+       when(mockFileService.getDirectory()).thenAnswer((_) async => 'C:\\output');
 
        await tester.pumpWidget(MaterialApp(home: Scaffold(body: ConfigPathScreen(fileService: mockFileService))));
        await tester.pump();
 
-       // Tap Browse for Nougat
-       await tester.tap(find.text('Browse').first);
+       // 1. Pick Nougat Exe
+       await tester.tap(find.text('Browse').at(0));
        await tester.pumpAndSettle();
-
        expect(find.text('C:\\bin\\nougat.exe'), findsOneWidget);
+
+       // 2. Pick Output Dir
+       await tester.tap(find.text('Browse').at(1));
+       await tester.pumpAndSettle();
+       expect(find.text('C:\\output'), findsOneWidget);
 
        // Save
        await tester.tap(find.text('Save Settings'));
-       // SnackBar animation might cause pumpAndSettle hang in some environments
        await tester.pump(const Duration(milliseconds: 500)); 
 
        expect(find.byType(SnackBar), findsOneWidget);

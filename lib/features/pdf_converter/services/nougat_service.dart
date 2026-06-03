@@ -113,7 +113,7 @@ class NougatService {
     return (
       resultCode: 1,
       contentData: content,
-      fileName: files.first.path.split(r"\\").last,
+      fileName: files.first.path.split(RegExp(r'[/\\]')).last,
     );
   }
 }

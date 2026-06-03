@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:paper_to_obsidian/core/services/file_service.dart';
@@ -8,7 +9,9 @@ import 'package:paper_to_obsidian/features/pdf_converter/services/obsidian_servi
 import 'package:paper_to_obsidian/widgets/snack.dart';
 
 class PdfConverterScreen extends StatefulWidget {
-  const PdfConverterScreen({super.key});
+  final Future<Process> Function(String, List<String>, {bool runInShell})? processStarter;
+  
+  const PdfConverterScreen({super.key, this.processStarter});
 
   @override
   State<PdfConverterScreen> createState() => _PdfConverterScreenState();
@@ -79,6 +82,7 @@ class _PdfConverterScreenState extends State<PdfConverterScreen> {
                 '(${data.percent}%)';
           });
         },
+        processStarter: widget.processStarter,
       );
       // CHECK TIMEOUT
       if (convertResult.exitCode == -1) {

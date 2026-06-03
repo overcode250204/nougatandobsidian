@@ -60,5 +60,36 @@ void main() {
        // We can't easily test timeout without mocking the timer or reducing the timeout duration.
        // However, we've verified the core logic.
     });
+
+    group('scanFileMd', () {
+      late Directory tempDir;
+
+      setUp(() async {
+        tempDir = await Directory.systemTemp.createTemp('nougat_scan_test');
+      });
+
+      tearDown(() async {
+        await tempDir.delete(recursive: true);
+      });
+
+      test('returns resultCode -1 if no files found', () async {
+        final result = await NougatService.scanFileMd(tempDir.path);
+        expect(result.resultCode, -1);
+      });
+
+      test('returns resultCode 0 if file is empty', () async {
+        await File('${tempDir.path}/test.mmd').writeAsString('');
+        final result = await NougatService.scanFileMd(tempDir.path);
+        expect(result.resultCode, 0);
+      });
+
+      test('returns resultCode 1 and content if file exists', () async {
+        await File('${tempDir.path}/test.mmd').writeAsString('content');
+        final result = await NougatService.scanFileMd(tempDir.path);
+        expect(result.resultCode, 1);
+        expect(result.contentData, 'content');
+        expect(result.fileName, 'test.mmd');
+      });
+    });
   });
 }

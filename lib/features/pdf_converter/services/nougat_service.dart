@@ -16,9 +16,11 @@ class NougatService {
   convertPdf(
     String nougatExe,
     String outputDir,
-    selectedPdf,
-    Function(ConverProgress data) onProgress,
-  ) async {
+    String? selectedPdf,
+    Function(ConverProgress data) onProgress, {
+    Future<Process> Function(String, List<String>, {bool runInShell})?
+        processStarter,
+  }) async {
     await Directory(outputDir).create(recursive: true);
 
     // Clear old outputs
@@ -33,11 +35,15 @@ class NougatService {
     }
 
     // Start nougat process (streaming)
-    final process = await Process.start(nougatExe, [
-      selectedPdf!,
-      '-o',
-      outputDir,
-    ], runInShell: true);
+    final process = await (processStarter ?? Process.start)(
+      nougatExe,
+      [
+        selectedPdf!,
+        '-o',
+        outputDir,
+      ],
+      runInShell: true,
+    );
 
     final stdoutBuf = StringBuffer();
 

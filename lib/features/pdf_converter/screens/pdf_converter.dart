@@ -2,12 +2,10 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:paper_to_obsidian/core/services/file_service.dart';
 import 'package:paper_to_obsidian/core/services/pref_service.dart';
 import 'package:paper_to_obsidian/features/pdf_converter/services/nougat_service.dart';
 import 'package:paper_to_obsidian/features/pdf_converter/services/obsidian_service.dart';
 import 'package:paper_to_obsidian/widgets/snack.dart';
-
 import 'package:paper_to_obsidian/core/services/file_service_interface.dart';
 
 class PdfConverterScreen extends StatefulWidget {
@@ -22,15 +20,10 @@ class PdfConverterScreen extends StatefulWidget {
 
 class _PdfConverterScreenState extends State<PdfConverterScreen> {
   String? _selectedPdf;
-
   String _markdown = '';
-
   bool _loading = false;
-
   double _progress = 0.0;
-
   String _pageInfo = '';
-
   String _status = '';
 
   Future<void> _onPickPdf() async {
@@ -39,7 +32,6 @@ class _PdfConverterScreenState extends State<PdfConverterScreen> {
     if (result != null) {
       setState(() {
         _selectedPdf = result.files.single.path!;
-
         _markdown = '';
         _status = '';
       });
@@ -58,37 +50,27 @@ class _PdfConverterScreenState extends State<PdfConverterScreen> {
     });
 
     try {
-      // LOAD FILE PATH CONFIG IN LOCAL (PREF) TO CONVER. NOTE: GET DEFAUT IF NULL
       final pathConfig = await loadPathConfig();
-      // HANDLE CONVERT
       final convertResult = await NougatService.convertPdf(
         pathConfig.nougatExe!,
         pathConfig.outputDir!,
-        // HANLD REAl TIME PROGRESS TRACKING (CALLBACK FUNCTION)
         _selectedPdf,
         (data) {
           final newPct = data.percent / 100;
-
           if (!mounted) return;
-
           setState(() {
             if (_progress > 0.5 && newPct < 0.1) {
               _progress = newPct;
             } else if (newPct >= _progress) {
               _progress = newPct;
             }
-
             _pageInfo = 'Page ${data.current} / ${data.total}';
-
-            _status =
-                '⏳ Converting... '
-                '${data.current}/${data.total} '
-                '(${data.percent}%)';
+            _status = '⏳ Converting... ${data.current}/${data.total} (${data.percent}%)';
           });
         },
         processStarter: widget.processStarter,
       );
-      // CHECK TIMEOUT
+
       if (convertResult.exitCode == -1) {
         setState(() {
           _loading = false;
@@ -97,17 +79,15 @@ class _PdfConverterScreenState extends State<PdfConverterScreen> {
         return;
       }
 
-      // CHECK FILE ALREADY CREATE
       if (convertResult.resultCode == -1) {
         setState(() {
           _loading = false;
           _progress = 0;
-          _status =
-              '❌ No .mmd output found.\n\nExit: $convertResult.exitCode\n${convertResult.stdoutBuf}';
+          _status = '❌ No .mmd output found.\n\nExit: ${convertResult.exitCode}\n${convertResult.stdoutBuf}';
         });
         return;
       }
-      // CHECK FILE IS EMTY??
+
       if (convertResult.resultCode == 0) {
         setState(() {
           _loading = false;
@@ -115,13 +95,13 @@ class _PdfConverterScreenState extends State<PdfConverterScreen> {
         });
         return;
       }
-      // CONVERT SUCCESS => SET DATA TO MARK_DOWN
+
       setState(() {
         _markdown = convertResult.content!;
         _loading = false;
         _progress = 1.0;
         _pageInfo = '';
-        _status = '✅ Conversion complete! ($convertResult.fileName)';
+        _status = '✅ Conversion complete! (${convertResult.fileName})';
       });
     } on TimeoutException {
       setState(() {
@@ -137,7 +117,6 @@ class _PdfConverterScreenState extends State<PdfConverterScreen> {
     }
   }
 
-  // TO SAVE OBSIBDIAN IF CONVERT SUCCSESS
   Future<void> _onSaveToObsidian() async {
     final pathConfig = await loadPathConfig();
     try {
@@ -188,7 +167,7 @@ class _PdfConverterScreenState extends State<PdfConverterScreen> {
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Text(
-                                  _selectedPdf?.split('\\').last ?? 'No PDF selected...',
+                                  _selectedPdf?.split(RegExp(r'[/\\]')).last ?? 'No PDF selected...',
                                   style: TextStyle(
                                     color: _selectedPdf == null ? Colors.white54 : Colors.white,
                                     fontSize: 14,
@@ -298,11 +277,11 @@ class _PdfConverterScreenState extends State<PdfConverterScreen> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.notes_rounded, size: 64, color: Colors.white.withValues(alpha: 0.1)),
+                          Icon(Icons.notes_rounded, size: 64, color: Colors.white.withAlpha(25)),
                           const SizedBox(height: 16),
                           Text(
                             'Your markdown will appear here',
-                            style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 16),
+                            style: TextStyle(color: Colors.white.withAlpha(100), fontSize: 16),
                           ),
                         ],
                       ),
@@ -334,7 +313,7 @@ class _PdfConverterScreenState extends State<PdfConverterScreen> {
                             },
                             icon: const Icon(Icons.copy, size: 18),
                             style: IconButton.styleFrom(
-                              backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.2),
+                              backgroundColor: theme.colorScheme.primary.withAlpha(50),
                               foregroundColor: theme.colorScheme.primary,
                             ),
                           ),

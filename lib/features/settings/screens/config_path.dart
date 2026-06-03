@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:paper_to_obsidian/core/services/pref_service.dart';
 import 'package:paper_to_obsidian/widgets/snack.dart';
 import 'package:paper_to_obsidian/core/services/file_service_interface.dart';
-import 'package:file_picker/file_picker.dart';
 
 class ConfigPathScreen extends StatefulWidget {
   final IFileService? fileService;

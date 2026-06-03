@@ -5,9 +5,11 @@ import 'package:paper_to_obsidian/core/constants/app_path.dart';
 
 void main() {
   group('PrefService Test', () {
+    setUp(() {
+       SharedPreferences.setMockInitialValues({});
+    });
+
     test('loadPathConfig returns default values when no data is saved', () async {
-      SharedPreferences.setMockInitialValues({});
-      
       final config = await loadPathConfig();
       
       expect(config.nougatExe, AppPathConfig.nougatExe);

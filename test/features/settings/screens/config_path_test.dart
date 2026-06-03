@@ -17,15 +17,17 @@ void main() {
        expect(find.text('Nougat EXE Path'), findsOneWidget);
        expect(find.text('Output Directory'), findsOneWidget);
        expect(find.text('Obsidian Vault Folder'), findsOneWidget);
-       expect(find.text('Save Settings'), findsOneWidget);
     });
 
-    testWidgets('shows placeholder if paths are empty', (WidgetTester tester) async {
+    testWidgets('can tap Save Settings', (WidgetTester tester) async {
        await tester.pumpWidget(const MaterialApp(home: Scaffold(body: ConfigPathScreen())));
        await tester.pumpAndSettle();
        
-       // Default values are empty strings in AppPathConfig usually or handled in screen
-       // Check if 'Not set' or default text appears
+       await tester.tap(find.text('Save Settings'));
+       await tester.pumpAndSettle();
+       
+       // Success snackbar should appear if data is valid (or defaults)
+       expect(find.byType(SnackBar), findsOneWidget);
     });
   });
 }

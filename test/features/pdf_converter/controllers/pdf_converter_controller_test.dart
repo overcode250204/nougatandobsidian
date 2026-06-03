@@ -73,13 +73,12 @@ void main() {
       stderrController.add(' 100%|██████████| 1/1'.codeUnits);
       stdoutController.add('dummy stdout'.codeUnits);
       
-      // Give streams a moment to be processed
-      await Future.delayed(const Duration(milliseconds: 100));
+      await Future.delayed(const Duration(milliseconds: 200));
 
       final outputFile = File('${tempDir.path}/test.mmd');
-      await outputFile.writeAsString('Converted Text Contents');
+      await outputFile.writeAsString('Converted Text Contents', flush: true);
 
-      await Future.delayed(const Duration(milliseconds: 100));
+      await Future.delayed(const Duration(milliseconds: 200));
       
       exitCodeCompleter.complete(0);
       await stdoutController.close();
@@ -90,6 +89,7 @@ void main() {
       expect(controller.loading, isFalse);
       expect(controller.progress, 1.0);
       expect(controller.markdown, 'Converted Text Contents');
+      expect(controller.status, contains('✅'));
     });
   });
 }

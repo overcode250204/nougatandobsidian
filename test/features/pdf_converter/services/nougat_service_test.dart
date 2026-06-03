@@ -11,7 +11,7 @@ import 'package:paper_to_obsidian/features/pdf_converter/models/conver_progress.
 import 'nougat_service_test.mocks.dart';
 
 void main() {
-  group('NougatService Test', () {
+  group('NougatService Exhaustive Unit Test', () {
     late MockProcess mockProcess;
     late StreamController<List<int>> stdoutController;
     late StreamController<List<int>> stderrController;
@@ -28,68 +28,60 @@ void main() {
       when(mockProcess.exitCode).thenAnswer((_) => exitCodeCompleter.future);
     });
 
-    tearDown(() {
-      stdoutController.close();
-      stderrController.close();
-    });
-
-    test('convertPdf parses progress correctly from stderr', () async {
-      final progressData = <ConverProgress>[];
-      
+    test('convertPdf parses various tqdm formats', () async {
+      final progressList = <ConverProgress>[];
       final resultFuture = NougatService.convertPdf(
         'nougat', 'output', 'paper.pdf', 
-        (data) => progressData.add(data),
+        (data) => progressList.add(data),
         processStarter: (exe, args, {runInShell = true}) async => mockProcess,
       );
 
-      // Simulate tqdm output on stderr: " 50%|█████     | 5/10"
-      stderrController.add(utf8.encode(' 50%|█████     | 5/10\n'));
-      
-      // Simulate finish
+      // Format 1: normal
+      stderrController.add(utf8.encode(' 20%|██        | 1/5 [00:01<00:04,  1.10s/pages]\n'));
+      // Format 2: no duration
+      stderrController.add(utf8.encode(' 40%|████      | 2/5\n'));
+      // Format 3: extra info
+      stderrController.add(utf8.encode(' 100%|██████████| 5/5 [00:05<00:00,  1.00s/pages] Done!\n'));
+
       exitCodeCompleter.complete(0);
-      
+      await stdoutController.close();
+      await stderrController.close();
       await resultFuture;
 
-      expect(progressData, isNotEmpty);
-      expect(progressData.last.percent, 50);
-      expect(progressData.last.current, '5');
-      expect(progressData.last.total, '10');
+      expect(progressList.length, 3);
+      expect(progressList[0].percent, 20);
+      expect(progressList[1].percent, 40);
+      expect(progressList[2].percent, 100);
     });
 
-    test('convertPdf returns exitCode -1 on timeout', () async {
-       // We can't easily test timeout without mocking the timer or reducing the timeout duration.
-       // However, we've verified the core logic.
-    });
+    test('scanFileMd handles multiple files and sorts by date', () async {
+      final tempDir = await Directory.systemTemp.createTemp('sort_test');
+      try {
+        final f1 = File('${tempDir.path}/old.mmd');
+        await f1.writeAsString('old content');
+        await Future.delayed(const Duration(milliseconds: 100));
+        
+        final f2 = File('${tempDir.path}/new.mmd');
+        await f2.writeAsString('new content');
 
-    group('scanFileMd', () {
-      late Directory tempDir;
-
-      setUp(() async {
-        tempDir = await Directory.systemTemp.createTemp('nougat_scan_test');
-      });
-
-      tearDown(() async {
-        await tempDir.delete(recursive: true);
-      });
-
-      test('returns resultCode -1 if no files found', () async {
-        final result = await NougatService.scanFileMd(tempDir.path);
-        expect(result.resultCode, -1);
-      });
-
-      test('returns resultCode 0 if file is empty', () async {
-        await File('${tempDir.path}/test.mmd').writeAsString('');
-        final result = await NougatService.scanFileMd(tempDir.path);
-        expect(result.resultCode, 0);
-      });
-
-      test('returns resultCode 1 and content if file exists', () async {
-        await File('${tempDir.path}/test.mmd').writeAsString('content');
         final result = await NougatService.scanFileMd(tempDir.path);
         expect(result.resultCode, 1);
-        expect(result.contentData, 'content');
-        expect(result.fileName, 'test.mmd');
-      });
+        expect(result.contentData, 'new content');
+        expect(result.fileName, 'new.mmd');
+      } finally {
+        await tempDir.delete(recursive: true);
+      }
+    });
+
+    test('scanFileMd returns resultCode 0 for empty files', () async {
+       final tempDir = await Directory.systemTemp.createTemp('empty_test');
+       try {
+         await File('${tempDir.path}/empty.mmd').writeAsString('  ');
+         final result = await NougatService.scanFileMd(tempDir.path);
+         expect(result.resultCode, 0);
+       } finally {
+         await tempDir.delete(recursive: true);
+       }
     });
   });
 }

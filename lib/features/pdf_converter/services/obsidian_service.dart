@@ -7,9 +7,10 @@ class ObsidianService {
       await Directory(vaultPath).create(recursive: true);
 
       final pdfName =
-          selectedPdf?.split('\\').last.replaceAll('.pdf', '') ?? 'paper';
+          selectedPdf?.split(RegExp(r'[/\\]')).last.replaceAll('.pdf', '') ?? 'converted_paper';
 
-      final output = File('$vaultPath\\$pdfName.md');
+      final vaultDir = Directory(vaultPath);
+      final output = File('${vaultDir.path}${Platform.pathSeparator}$pdfName.md');
 
       await output.writeAsString(markdown, flush: true);
 

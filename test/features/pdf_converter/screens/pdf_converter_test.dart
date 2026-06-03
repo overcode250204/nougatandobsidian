@@ -10,6 +10,8 @@ import 'package:mockito/mockito.dart';
 
 import 'package:paper_to_obsidian/core/services/file_service_interface.dart';
 
+import 'dart:io';
+
 @GenerateMocks([Process, IFileService])
 import 'pdf_converter_test.mocks.dart';
 
@@ -42,7 +44,7 @@ void main() {
          processStarter: (exe, args, {runInShell = true}) async => mockProcess,
          fileService: mockFileService,
        ))));
-       await tester.pumpAndSettle();
+       await tester.pump();
 
        // 1. Pick PDF
        await tester.tap(find.text('Browse'));
@@ -51,19 +53,25 @@ void main() {
 
        // 2. Convert
        await tester.tap(find.text('Convert to Markdown'));
-       await tester.pump();
+       // Pump enough to show the loader but NOT settle because of indeterminate animation
+       await tester.pump(const Duration(milliseconds: 100)); 
        
        expect(find.byType(LinearProgressIndicator), findsOneWidget);
 
        // Simulate output
-       stderrController.add('100%|â–ˆâ–ˆâ–ˆâ–ˆ| 1/1'.codeUnits);
+       stderrController.add('100%|████| 1/1'.codeUnits);
        stdoutController.add('Content'.codeUnits);
        
        exitCodeCompleter.complete(0);
        await stdoutController.close();
        await stderrController.close();
        
-       await tester.pumpAndSettle();
+       // Wait for the async _onConvertPdf to finish. 
+       // We pump multiple times with a duration to allow the Future to complete 
+       // and setState to be called, which will remove the progress indicator.
+       for (int i = 0; i < 5; i++) {
+         await tester.pump(const Duration(milliseconds: 100));
+       }
        
        expect(find.textContaining('✅'), findsOneWidget);
 
@@ -72,7 +80,7 @@ void main() {
        await tester.pumpAndSettle();
     });
 
-    testWidgets('handles error', (WidgetTester tester) async {
+    testWidgets('handles error without hanging', (WidgetTester tester) async {
        final mockFileService = MockIFileService();
        final pdfResult = FilePickerResult(<PlatformFile>[PlatformFile(name: 'paper.pdf', path: 'C:\\docs\\paper.pdf', size: 100)]);
        when(mockFileService.getPdf()).thenAnswer((_) async => pdfResult);
@@ -81,18 +89,21 @@ void main() {
          processStarter: (exe, args, {runInShell = true}) async => mockProcess,
          fileService: mockFileService,
        ))));
-       await tester.pumpAndSettle();
+       await tester.pump();
 
        await tester.tap(find.text('Browse'));
        await tester.pumpAndSettle();
 
        await tester.tap(find.text('Convert to Markdown'));
-       await tester.pump();
+       await tester.pump(const Duration(milliseconds: 100));
        
        exitCodeCompleter.complete(1);
        await stdoutController.close();
        await stderrController.close();
-       await tester.pumpAndSettle();
+       
+       for (int i = 0; i < 5; i++) {
+         await tester.pump(const Duration(milliseconds: 100));
+       }
        
        expect(find.textContaining('❌'), findsOneWidget);
     });

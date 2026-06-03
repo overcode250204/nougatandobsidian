@@ -22,8 +22,8 @@ void main() {
 
     testWidgets('renders all browse fields', (WidgetTester tester) async {
        await tester.pumpWidget(MaterialApp(home: Scaffold(body: ConfigPathScreen(fileService: mockFileService))));
-       await tester.pumpAndSettle();
-
+       await tester.pump(); // Use pump instead of pumpAndSettle if there are any splash animations
+       
        expect(find.text('Configuration'), findsOneWidget);
     });
 
@@ -32,7 +32,7 @@ void main() {
        when(mockFileService.getPdf()).thenAnswer((_) async => result);
 
        await tester.pumpWidget(MaterialApp(home: Scaffold(body: ConfigPathScreen(fileService: mockFileService))));
-       await tester.pumpAndSettle();
+       await tester.pump();
 
        // Tap Browse for Nougat
        await tester.tap(find.text('Browse').first);
@@ -42,7 +42,8 @@ void main() {
 
        // Save
        await tester.tap(find.text('Save Settings'));
-       await tester.pumpAndSettle();
+       // SnackBar animation might cause pumpAndSettle hang in some environments
+       await tester.pump(const Duration(milliseconds: 500)); 
 
        expect(find.byType(SnackBar), findsOneWidget);
     });

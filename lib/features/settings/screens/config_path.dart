@@ -106,7 +106,7 @@ class _ConfigPathScreenState extends State<ConfigPathScreen> {
           ElevatedButton.icon(
             onPressed: () async {
               await c.save();
-              if (mounted) snack(context, 'Settings Saved ✅');
+              if (context.mounted) snack(context, 'Settings Saved ✅');
             },
             icon: const Icon(Icons.save),
             label: const Text('Save Settings'),
